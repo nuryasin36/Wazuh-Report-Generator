@@ -9,16 +9,16 @@
         th, td { border: 1px solid black; padding: 5px; text-align: left; }
         th { background-color: #f2f2f2; }
         th:first-child, td:first-child { text-align: center; }
+        td[contenteditable="true"] { background-color: #ffffcc; cursor: pointer; }
         button { margin-top: 10px; padding: 5px; }
-        input[type="text"] { width: 100%; border: none; background: transparent; }
-        .pagination { margin-top: 10px; }
-        .pagination button { margin-right: 5px; }
+        .pagination { margin-top: 10px; display: flex; align-items: center; gap: 10px; }
     </style>
 </head>
 <body>
     <h2>Wazuh Alerts</h2>
     <button id="removeSelected">Remove Selected</button>
     <button id="generateReport">Generate Report</button>
+
     <table id="alertsTable">
         <thead>
             <tr>
@@ -36,10 +36,20 @@
         </thead>
         <tbody></tbody>
     </table>
+
     <div class="pagination">
         <button id="prevPage">Previous</button>
-        <span id="pageInfo"></span>
+        <span id="pageInfo">Page 1</span>
         <button id="nextPage">Next</button>
+        <label for="rowsPerPage">Rows per page:</label>
+        <select id="rowsPerPage">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+        </select>
     </div>
 
     <script src="popup.js"></script>

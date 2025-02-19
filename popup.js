@@ -1,98 +1,102 @@
 document.addEventListener("DOMContentLoaded", () => {
     const tableBody = document.querySelector("#alertsTable tbody");
     const selectAllCheckbox = document.getElementById("selectAll");
-    const removeSelectedButton = document.getElementById("removeSelected");
-    const generateReportButton = document.getElementById("generateReport");
-    const itemsPerPage = 10;
-    let currentPage = 1;
+    const prevPageBtn = document.getElementById("prevPage");
+    const nextPageBtn = document.getElementById("nextPage");
+    const pageInfo = document.getElementById("pageInfo");
+    const rowsPerPageSelect = document.getElementById("rowsPerPage");
+    const removeSelectedBtn = document.getElementById("removeSelected");
     let alerts = [];
+    let currentPage = 1;
+    let rowsPerPage = parseInt(rowsPerPageSelect.value);
+
+    function renderTable() {
+        tableBody.innerHTML = "";
+        let start = (currentPage - 1) * rowsPerPage;
+        let end = start + rowsPerPage;
+        let paginatedData = alerts.slice(start, end);
+
+        paginatedData.forEach((alert, index) => {
+            let row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td><input type="checkbox" class="rowCheckbox" data-index="${start + index}"></td>
+                <td contenteditable="true" data-field="timestamp">${alert.timestamp}</td>
+                <td contenteditable="true" data-field="service">${alert.service}</td>
+                <td contenteditable="true" data-field="sourceIP">${alert.sourceIP}</td>
+                <td contenteditable="true" data-field="destIP">${alert.destIP}</td>
+                <td contenteditable="true" data-field="port">${alert.port}</td>
+                <td contenteditable="true" data-field="status">${alert.status}</td>
+                <td contenteditable="true" data-field="country">${alert.country}</td>
+                <td contenteditable="true" data-field="attackType">${alert.attackType}</td>
+                <td contenteditable="true" data-field="severity">${alert.severity}</td>
+            `;
+
+            tableBody.appendChild(row);
+
+            // Event listener buat edit langsung di cell
+            row.querySelectorAll("td[contenteditable=true]").forEach(cell => {
+                cell.addEventListener("blur", (e) => saveEdit(e, start + index));
+                cell.addEventListener("keypress", (e) => {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        cell.blur();
+                    }
+                });
+            });
+        });
+
+        pageInfo.textContent = `Page ${currentPage} of ${Math.max(1, Math.ceil(alerts.length / rowsPerPage))}`;
+        prevPageBtn.disabled = currentPage === 1;
+        nextPageBtn.disabled = currentPage * rowsPerPage >= alerts.length;
+    }
+
+    function saveEdit(event, index) {
+        let field = event.target.dataset.field;
+        alerts[index][field] = event.target.textContent;
+
+        chrome.storage.local.set({ wazuh_alerts: alerts }, () => {
+            console.log("Data updated");
+        });
+    }
 
     function loadAlerts() {
         chrome.storage.local.get("wazuh_alerts", (result) => {
             alerts = result.wazuh_alerts || [];
+            currentPage = 1;
             renderTable();
         });
     }
 
-    function renderTable() {
-        tableBody.innerHTML = "";
-        const start = (currentPage - 1) * itemsPerPage;
-        const paginatedAlerts = alerts.slice(start, start + itemsPerPage);
+    removeSelectedBtn.addEventListener("click", () => {
+        let checkboxes = document.querySelectorAll(".rowCheckbox:checked");
+        let indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
 
-        paginatedAlerts.forEach((alert, index) => {
-            let row = document.createElement("tr");
-            row.innerHTML = `
-                <td><input type="checkbox" class="rowCheckbox"></td>
-                <td contenteditable="true" data-index="${start + index}" data-field="timestamp">${alert.timestamp}</td>
-                <td contenteditable="true" data-index="${start + index}" data-field="service">${alert.service}</td>
-                <td contenteditable="true" data-index="${start + index}" data-field="sourceIP">${alert.sourceIP}</td>
-                <td contenteditable="true" data-index="${start + index}" data-field="destIP">${alert.destIP}</td>
-                <td contenteditable="true" data-index="${start + index}" data-field="port">${alert.port}</td>
-                <td contenteditable="true" data-index="${start + index}" data-field="status">${alert.status}</td>
-                <td contenteditable="true" data-index="${start + index}" data-field="country">${alert.country}</td>
-                <td contenteditable="true" data-index="${start + index}" data-field="attackType">${alert.attackType}</td>
-                <td contenteditable="true" data-index="${start + index}" data-field="severity">${alert.severity}</td>
-            `;
-            tableBody.appendChild(row);
-        });
-    }
+        alerts = alerts.filter((_, index) => !indexesToRemove.includes(index));
 
-    tableBody.addEventListener("input", (event) => {
-        const cell = event.target;
-        const index = cell.dataset.index;
-        const field = cell.dataset.field;
-        if (index !== undefined && field) {
-            alerts[index][field] = cell.textContent;
-            chrome.storage.local.set({ wazuh_alerts: alerts });
-        }
-    });
-
-    selectAllCheckbox.addEventListener("change", () => {
-        document.querySelectorAll(".rowCheckbox").forEach(checkbox => {
-            checkbox.checked = selectAllCheckbox.checked;
-        });
-    });
-
-    removeSelectedButton.addEventListener("click", () => {
-        let updatedAlerts = alerts.filter((_, index) => {
-            let checkbox = document.querySelector(`.rowCheckbox:nth-child(${index + 1})`);
-            return !checkbox.checked;
-        });
-
-        chrome.storage.local.set({ wazuh_alerts: updatedAlerts }, () => {
-            console.log("✅ Selected rows removed");
+        chrome.storage.local.set({ wazuh_alerts: alerts }, () => {
             loadAlerts();
         });
     });
 
-    generateReportButton.addEventListener("click", () => {
-        let selectedAlerts = [];
-        document.querySelectorAll(".rowCheckbox").forEach((checkbox, index) => {
-            if (checkbox.checked) {
-                selectedAlerts.push(alerts[index]);
-            }
-        });
-
-        if (selectedAlerts.length > 0) {
-            console.log("📄 Report Data:", selectedAlerts);
-            alert("Report generated! Check console for data.");
-        } else {
-            alert("No data selected!");
-        }
-    });
-
-    document.getElementById("prevPage").addEventListener("click", () => {
+    prevPageBtn.addEventListener("click", () => {
         if (currentPage > 1) {
             currentPage--;
             renderTable();
         }
     });
 
-    document.getElementById("nextPage").addEventListener("click", () => {
-        if (currentPage < Math.ceil(alerts.length / itemsPerPage)) {
+    nextPageBtn.addEventListener("click", () => {
+        if (currentPage * rowsPerPage < alerts.length) {
             currentPage++;
             renderTable();
         }
+    });
+
+    rowsPerPageSelect.addEventListener("change", () => {
+        rowsPerPage = parseInt(rowsPerPageSelect.value);
+        currentPage = 1;
+        renderTable();
     });
 
     loadAlerts();
