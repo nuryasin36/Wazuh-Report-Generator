@@ -3,44 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wazuh Alerts</title>
+    <title>Wazuh Extension</title>
     <style>
+        body { font-family: Arial, sans-serif; }
+        .tabs { display: flex; margin-bottom: 10px; }
+        .tab { padding: 10px 20px; cursor: pointer; border: 1px solid #ccc; border-bottom: none; }
+        .tab.active { background-color: #ddd; font-weight: bold; }
+        .tab-content { display: none; border: 1px solid #ccc; padding: 10px; }
+        .tab-content.active { display: block; }
+
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid black; padding: 5px; text-align: left; }
         th { background-color: #f2f2f2; }
-        th:first-child, td:first-child { text-align: center; }
         td[contenteditable="true"] { background-color: #ffffcc; cursor: pointer; }
         button { margin-top: 10px; padding: 5px; }
         .pagination { margin-top: 10px; display: flex; align-items: center; gap: 10px; }
     </style>
 </head>
 <body>
-    <h2>Wazuh Alerts</h2>
-    <button id="removeSelected">Remove Selected</button>
-    <button id="generateReport">Generate Report</button>
 
-    <table id="alertsTable">
-        <thead>
-            <tr>
-                <th><input type="checkbox" id="selectAll"></th>
-                <th>Timestamp</th>
-                <th>Service</th>
-                <th>Source IP</th>
-                <th>Destination IP</th>
-                <th>Port</th>
-                <th>Status</th>
-                <th>Country</th>
-                <th>Attack Type</th>
-                <th>Severity</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    <div class="tabs">
+        <div class="tab active" data-target="alertsTab">Alerts</div>
+        <div class="tab" data-target="wafTab">WAF</div>
+        <div class="tab" data-target="reportTab">Report</div>
+    </div>
 
-    <div class="pagination">
-        <button id="prevPage">Previous</button>
-        <span id="pageInfo">Page 1</span>
-        <button id="nextPage">Next</button>
+    <!-- Alerts Tab -->
+    <div id="alertsTab" class="tab-content active">
+        <h2>Wazuh Alerts</h2>
+        <button id="removeSelected">Remove Selected</button>
+        
         <label for="rowsPerPage">Rows per page:</label>
         <select id="rowsPerPage">
             <option value="5">5</option>
@@ -50,6 +42,44 @@
             <option value="100">100</option>
             <option value="200">200</option>
         </select>
+
+        <table id="alertsTable">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="selectAll"></th>
+                    <th>Timestamp</th>
+                    <th>Service</th>
+                    <th>Source IP</th>
+                    <th>Destination IP</th>
+                    <th>Port</th>
+                    <th>Status</th>
+                    <th>Country</th>
+                    <th>Attack Type</th>
+                    <th>Severity</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="pagination">
+            <button id="prevPage">Previous</button>
+            <span id="pageInfo">Page 1</span>
+            <button id="nextPage">Next</button>
+        </div>
+    </div>
+
+    <!-- WAF Tab -->
+    <div id="wafTab" class="tab-content">
+        <h2>WAF Data</h2>
+        <p>🔍 Data WAF bisa ditambahkan di sini.</p>
+    </div>
+
+    <!-- Report Tab -->
+    <div id="reportTab" class="tab-content">
+        <h2>Generated Reports</h2>
+        <p>📄 Laporan hasil analisis bisa ditampilkan atau diexport dari sini.</p>
+        <button id="exportCSV">Export to CSV</button>
+        <button id="exportPDF">Export to PDF</button>
     </div>
 
     <script src="popup.js"></script>

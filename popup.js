@@ -1,4 +1,16 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // Tab switching
+    document.querySelectorAll(".tab").forEach(tab => {
+        tab.addEventListener("click", function () {
+            document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+            document.querySelectorAll(".tab-content").forEach(tc => tc.classList.remove("active"));
+
+            this.classList.add("active");
+            document.getElementById(this.dataset.target).classList.add("active");
+        });
+    });
+
+    // Load Alerts Data
     const tableBody = document.querySelector("#alertsTable tbody");
     const selectAllCheckbox = document.getElementById("selectAll");
     const prevPageBtn = document.getElementById("prevPage");
@@ -6,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const pageInfo = document.getElementById("pageInfo");
     const rowsPerPageSelect = document.getElementById("rowsPerPage");
     const removeSelectedBtn = document.getElementById("removeSelected");
+    
     let alerts = [];
     let currentPage = 1;
     let rowsPerPage = parseInt(rowsPerPageSelect.value);
@@ -33,31 +46,11 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
 
             tableBody.appendChild(row);
-
-            // Event listener buat edit langsung di cell
-            row.querySelectorAll("td[contenteditable=true]").forEach(cell => {
-                cell.addEventListener("blur", (e) => saveEdit(e, start + index));
-                cell.addEventListener("keypress", (e) => {
-                    if (e.key === "Enter") {
-                        e.preventDefault();
-                        cell.blur();
-                    }
-                });
-            });
         });
 
         pageInfo.textContent = `Page ${currentPage} of ${Math.max(1, Math.ceil(alerts.length / rowsPerPage))}`;
         prevPageBtn.disabled = currentPage === 1;
         nextPageBtn.disabled = currentPage * rowsPerPage >= alerts.length;
-    }
-
-    function saveEdit(event, index) {
-        let field = event.target.dataset.field;
-        alerts[index][field] = event.target.textContent;
-
-        chrome.storage.local.set({ wazuh_alerts: alerts }, () => {
-            console.log("Data updated");
-        });
     }
 
     function loadAlerts() {
@@ -67,17 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
             renderTable();
         });
     }
-
-    removeSelectedBtn.addEventListener("click", () => {
-        let checkboxes = document.querySelectorAll(".rowCheckbox:checked");
-        let indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
-
-        alerts = alerts.filter((_, index) => !indexesToRemove.includes(index));
-
-        chrome.storage.local.set({ wazuh_alerts: alerts }, () => {
-            loadAlerts();
-        });
-    });
 
     prevPageBtn.addEventListener("click", () => {
         if (currentPage > 1) {
@@ -99,5 +81,50 @@ document.addEventListener("DOMContentLoaded", () => {
         renderTable();
     });
 
+    removeSelectedBtn.addEventListener("click", () => {
+        let checkboxes = document.querySelectorAll(".rowCheckbox:checked");
+        let indexesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+
+        alerts = alerts.filter((_, index) => !indexesToRemove.includes(index));
+
+        chrome.storage.local.set({ wazuh_alerts: alerts }, () => {
+            loadAlerts();
+        });
+    });
+
     loadAlerts();
+
+    document.querySelector("#alertsTable tbody").addEventListener("input", (event) => {
+        let cell = event.target;
+        let row = cell.parentElement;
+        let rowIndex = row.getAttribute("data-index"); // Ambil index row yang diedit
+    
+        if (rowIndex !== null) {
+            chrome.storage.local.get("wazuh_alerts", (result) => {
+                let alerts = result.wazuh_alerts || [];
+                let alertIndex = parseInt(rowIndex);
+    
+                if (alerts[alertIndex]) {
+                    let columnIndex = cell.cellIndex - 1; // Karena ada checkbox di kolom pertama
+                    let headers = ["timestamp", "service", "sourceIP", "destIP", "port", "status", "country", "attackType", "severity"];
+    
+                    if (columnIndex >= 0 && columnIndex < headers.length) {
+                        alerts[alertIndex][headers[columnIndex]] = cell.innerText;
+                        chrome.storage.local.set({ wazuh_alerts: alerts }, () => {
+                            console.log(`✅ Data updated: ${headers[columnIndex]} -> ${cell.innerText}`);
+                        });
+                    }
+                }
+            });
+        }
+    });    
+
+    document.getElementById("generatePerAttack").addEventListener("click", () => {
+        alert("🔍 Report Per Attack Generated!");
+    });
+    
+    document.getElementById("generatePer4Hours").addEventListener("click", () => {
+        alert("⏳ Report Per 4 Hours Generated!");
+    });
+    
 });
