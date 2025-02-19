@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Wazuh Alert Reporter",
+  "version": "1.0",
+  "description": "Copy Wazuh alerts and generate a report",
+  "permissions": 
+          ["storage",
+          "scripting",
+          "clipboardRead",
+          "clipboardWrite",
+          "activeTab",
+          "background"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  }
+}
