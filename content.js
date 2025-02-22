@@ -1,60 +1,73 @@
-document.addEventListener("copy", async () => {
-    try {
-        let text = await navigator.clipboard.readText();
-        console.log("📋 Clipboard captured:", text);
+// Test script loaded
+console.log("Content script loaded and running");
 
-        if (!text.trim()) {
-            console.warn("⚠️ Clipboard is empty!");
+// Listen to copy with keyboard
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'c') {
+        console.log("Ctrl+C detected");
+        setTimeout(processClipboard, 100); // Give time for copy to complete
+    }
+});
+
+// Listen to copy with context menu
+document.addEventListener('copy', function(e) {
+    console.log("Copy event detected");
+    setTimeout(processClipboard, 100);
+});
+
+async function processClipboard() {
+    try {
+        const text = await navigator.clipboard.readText();
+        console.log("Clipboard content:", text);
+
+        if (!text || !text.trim()) {
+            console.log("Empty clipboard");
             return;
         }
 
-        let rows = text.trim().split("\n");
-        let timestampRegex = /\w{3} \d{1,2}, \d{4} @ \d{2}:\d{2}:\d{2}\.\d{3}/;
-        let wafData = [];
+        const lines = text.trim().split("\n");
+        console.log("Number of lines:", lines.length);
+        console.log("First line:", lines[0]);
 
-        rows.forEach(row => {
-            if (!timestampRegex.test(row)) {
-                let cols = row.split("\t");
-                if (cols.length === 3) {
-                    let attackType = cols[0].trim();
-                    let status = cols[1].trim();
-                    let count = cols[2].trim();
-
-                    wafData.push({ attackType, status, count });
-                }
-            }
-        });
-
-        if (wafData.length > 0) {
-            chrome.storage.local.get({ wafEntries: [] }, (data) => {
-                let storedData = data.wafEntries || [];
-
-                wafData.forEach(newEntry => {
-                    let exists = storedData.some(entry =>
-                        entry.attackType === newEntry.attackType &&
-                        entry.status === newEntry.status
-                    );
-
-                    if (!exists) {
-                        storedData.push(newEntry);
-                    }
-                });
-
-                chrome.storage.local.set({ wafEntries: storedData }, () => {
-                    console.log("✅ WAF Data Saved:", storedData);
-                });
-            });
-        } else {
-            chrome.runtime.sendMessage({ action: "saveClipboardData", data: text }, (response) => {
-                if (chrome.runtime.lastError) {
-                    console.error("❌ Error sending message:", chrome.runtime.lastError);
-                } else {
-                    console.log("✅ Message sent successfully:", response);
-                }
+        // Check if it's IPS data (has timestamp with @)
+        if (lines[0].includes('@')) {
+            console.log("Detected as IPS data");
+            chrome.runtime.sendMessage({
+                action: "saveIPSData",
+                data: text
+            }, response => {
+                console.log("Response from background:", response);
             });
         }
+        // Check if it's WAF data (has tabs)
+        else if (lines[0].includes('\t')) {
+            console.log("Detected as WAF data");
+            chrome.runtime.sendMessage({
+                action: "saveWAFData",
+                data: text
+            }, response => {
+                console.log("Response from background:", response);
+            });
+        } else {
+            console.log("Unknown data format");
+        }
+    } catch (error) {
+        console.error("Error processing clipboard:", error);
+    }
+}
 
-    } catch (err) {
-        console.error("🚨 Clipboard error:", err);
+// Test message passing
+chrome.runtime.sendMessage({
+    action: "test",
+    data: "Test message from content script"
+}, response => {
+    console.log("Test message response:", response);
+});
+
+// Listen untuk pesan dari popup atau background script
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "getPageData") {
+        // Logic untuk mengambil data dari halaman web jika diperlukan
+        sendResponse({data: "Page data here"});
     }
 });

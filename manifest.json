@@ -3,13 +3,13 @@
   "name": "Wazuh Alert Reporter",
   "version": "1.0",
   "description": "Copy Wazuh alerts and generate a report",
-  "permissions": 
-          ["storage",
-          "scripting",
-          "clipboardRead",
-          "clipboardWrite",
-          "activeTab",
-          "background"],
+  "permissions": [
+    "storage",
+    "scripting",
+    "clipboardRead",
+    "clipboardWrite",
+    "activeTab"
+  ],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
