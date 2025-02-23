@@ -14,10 +14,22 @@
 
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid black; padding: 5px; text-align: left; }
-        th { background-color: #f2f2f2; }
+        th { background-color: #f2f2f2; cursor: pointer; }
         td[contenteditable="true"] { background-color: #ffffcc; cursor: pointer; }
         button { margin-top: 10px; padding: 5px; }
         .pagination { margin-top: 10px; display: flex; align-items: center; gap: 10px; }
+        .sort-icon {
+            margin-left: 5px;
+            font-size: 12px;
+        }
+
+        .sort-icon.asc::after {
+            content: "↑";
+        }
+
+        .sort-icon.desc::after {
+            content: "↓";
+        }
     </style>
 </head>
 <body>
@@ -47,15 +59,16 @@
             <thead>
                 <tr>
                     <th><input type="checkbox" id="selectAll"></th>
-                    <th>Timestamp</th>
-                    <th>Service</th>
-                    <th>Source IP</th>
-                    <th>Destination IP</th>
-                    <th>Port</th>
-                    <th>Status</th>
-                    <th>Country</th>
-                    <th>Attack Type</th>
-                    <th>Severity</th>
+                    <th data-field="timestamp">Timestamp <span class="sort-icon"></span></th>
+                    <th data-field="service">Service <span class="sort-icon"></span></th>
+                    <th data-field="sourceIP">Source IP <span class="sort-icon"></span></th>
+                    <th data-field="destIP">Destination IP <span class="sort-icon"></span></th>
+                    <th data-field="port">Port <span class="sort-icon"></span></th>
+                    <th data-field="status">Status <span class="sort-icon"></span></th>
+                    <th data-field="country">Country <span class="sort-icon"></span></th>
+                    <th data-field="attackType">Attack Type <span class="sort-icon"></span></th>
+                    <th data-field="severity">Severity <span class="sort-icon"></span></th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -71,15 +84,45 @@
     <!-- WAF Tab -->
     <div id="wafTab" class="tab-content">
         <h2>WAF Data</h2>
-        <p>🔍 Data WAF bisa ditambahkan di sini.</p>
+        <button id="removeSelectedWAF">Remove Selected</button>
+
+        <label for="rowsPerPageWAF">Rows per page:</label>
+        <select id="rowsPerPageWAF">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+        </select>
+
+        <table id="wafTable">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="selectAllWAF"></th>
+                    <th data-field="attackType">Attack Type <span class="sort-icon"></span></th>
+                    <th data-field="action">Action <span class="sort-icon"></span></th>
+                    <th data-field="count">Count <span class="sort-icon"></span></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="pagination">
+            <button id="prevPageWAF">Previous</button>
+            <span id="pageInfoWAF">Page 1</span>
+            <button id="nextPageWAF">Next</button>
+        </div>
     </div>
 
     <!-- Report Tab -->
     <div id="reportTab" class="tab-content">
         <h2>Generated Reports</h2>
-        <p>📄 Laporan hasil analisis bisa ditampilkan atau diexport dari sini.</p>
-        <button id="exportCSV">Export to CSV</button>
-        <button id="exportPDF">Export to PDF</button>
+        <button id="generatePerAlert">Generate Report Per Alert</button>
+        <button id="generatePer4Hours">Generate Report Per 4 Hours</button>
+        <button id="saveReport">Save Report</button>
+        <button id="copyReport">Copy Report</button> <!-- Tombol baru untuk menyalin laporan -->
+        <textarea id="reportOutput" readonly placeholder="Generated report will appear here..." style="width: 100%; height: 200px; margin-top: 10px;"></textarea>
     </div>
 
     <script src="popup.js"></script>
