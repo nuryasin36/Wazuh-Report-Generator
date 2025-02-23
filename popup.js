@@ -499,7 +499,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     
             // Format laporan
-            let report = `Dear Team {Ganti},\n\nBerikut kami laporkan mengenai aktivitas monitoring selama 4 jam pada Pukul ${fourHoursAgo.toLocaleTimeString()} - ${now.toLocaleTimeString()}, ${now.toLocaleDateString()} Berdasarkan aktivitas monitoring SIEM yang dilakukan pada FortiAnalyzer dan WAF.\n\n`;
+            let report = `Dear Team Ganti,\n\nBerikut kami laporkan mengenai aktivitas monitoring selama 4 jam pada Pukul ${fourHoursAgo.toLocaleTimeString()} - ${now.toLocaleTimeString()}, ${now.toLocaleDateString()} Berdasarkan aktivitas monitoring SIEM yang dilakukan pada FortiAnalyzer dan WAF.\n\n`;
             report += "====================================\n\n";
             report += "1. FortiAnalyzer\n\n";
             report += "  ServerFarm (DC)\n\n";
