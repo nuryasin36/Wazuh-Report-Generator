@@ -1,9 +1,8 @@
 // Shared utility function to parse clipboard data for Wazuh alerts
-
-export function parseClipboardData(rawData) {
+function parseClipboardData(rawData) {
     console.log("Parsing clipboard data...");
 
-    let lines = rawData.replace(/\\r/g, "").split("\\n").map(line => line.trim()).filter(line => line);
+    let lines = rawData.replace(/\r/g, "").split("\n").map(line => line.trim()).filter(line => line);
     console.log("Parsed lines:", lines);
 
     if (lines.length < 9) {
@@ -57,7 +56,7 @@ function isValidTimestamp(timestamp) {
 
 // Check if IP address is valid
 function isValidIP(ip) {
-    return /^(\\d{1,3}\\.){3}\\d{1,3}$/.test(ip);
+    return /^(\d{1,3}\.){3}\d{1,3}$/.test(ip);
 }
 
 // Format severity with first letter capitalized
@@ -71,3 +70,9 @@ function formatSeverity(severity) {
     };
     return formatted[lowerCaseSeverity] || severity;
 }
+
+// Make functions globally available
+window.parseClipboardData = parseClipboardData;
+window.isValidTimestamp = isValidTimestamp;
+window.isValidIP = isValidIP;
+window.formatSeverity = formatSeverity;

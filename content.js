@@ -1,126 +1,78 @@
-import { parseClipboardData } from './utils.js';
+console.log("✅ Content script loaded");
 
-// List kemungkinan attack types
-const possibleAttacks = [
-    "Information Leakage",
-    "HTTP Parser Attack",
-    "Abuse of Functionality",
-    "Non-browser Client",
-    "Vulnerability Scan",
-    "Buffer Overflow",
-    "Forceful Browsing",
-    "Injection Attempt",
-    "Detection Evasion"
-];
+// Listen for copy events
+document.addEventListener('copy', function(e) {
+    // Get selected text
+    const selectedText = window.getSelection().toString();
+    
+    if (!selectedText) {
+        console.log("No text selected");
+        return;
+    }
 
-document.addEventListener("copy", async () => {
-    try {
-        // Baca data dari clipboard
-        let text = await navigator.clipboard.readText();
-        console.log("📋 Clipboard captured:", text);
+    console.log("📋 Text copied:", selectedText);
 
-        // Jika clipboard kosong, hentikan proses
-        if (!text.trim()) {
-            console.warn("⚠️ Clipboard is empty!");
-            return;
-        }
-
-        // Pisahkan data menjadi baris-baris dan bersihkan
-        let rows = text
-            .split("\n") // Pisahkan berdasarkan newline
-            .map(row => row.trim()) // Hilangkan spasi di awal dan akhir
-            .filter(row => row.length > 0); // Hapus baris kosong
-
-        console.log("🧹 Cleaned rows:", rows);
-
-        // Cek apakah baris pertama adalah timestamp
-        let firstRow = rows[0];
-        let timestampRegex = /\w{3} \d{1,2}, \d{4} @ \d{2}:\d{2}:\d{2}\.\d{3}/;
-
-        if (timestampRegex.test(firstRow)) {
-            // Jika baris pertama adalah timestamp, masukkan ke IPS (Alerts)
-            console.log("✅ Data is for IPS (Alerts)");
-            chrome.storage.local.get("wazuh_alerts", (result) => {
-                let existingAlerts = result.wazuh_alerts || [];
-                let newAlerts = parseClipboardData(text).alerts;
-
-                // Cek duplikasi berdasarkan timestamp
-                newAlerts.forEach(newAlert => {
-                    let exists = existingAlerts.some(alert => alert.timestamp === newAlert.timestamp);
-                    if (!exists) {
-                        existingAlerts.push(newAlert);
-                    }
-                });
-
-                // Simpan data ke storage
-                chrome.storage.local.set({ wazuh_alerts: existingAlerts }, () => {
-                    console.log("✅ Alerts saved without duplicates.");
-                    // Kirim pesan ke popup.js untuk render ulang tabel
-                    chrome.runtime.sendMessage({ action: "refreshAlertsTable" });
-                });
-            });
+    // Send data to background script
+    chrome.runtime.sendMessage({
+        action: "saveClipboardData",
+        data: selectedText
+    }, response => {
+        if (response && response.success) {
+            console.log("✅ Data successfully processed and saved");
         } else {
-            // Cek apakah data mengandung jenis serangan (untuk WAF)
-            let isWAFData = false;
-            let wafEntries = [];
+            console.error("❌ Error processing data:", response?.error);
+        }
+    });
+});
 
-            // Loop melalui setiap baris data (per 3 baris)
-            for (let i = 0; i < rows.length; i += 3) {
-                let attackTypeRow = rows[i];
-                let actionRow = rows[i + 1];
-                let countRow = rows[i + 2];
+// Listen for paste events to capture WAF data
+document.addEventListener('paste', async function(e) {
+    try {
+        const text = e.clipboardData.getData('text');
+        if (!text) return;
 
-                // Pastikan ada 3 baris yang valid
-                if (attackTypeRow && actionRow && countRow) {
-                    // Validasi action (hanya "alerted" atau "blocked")
-                    let validActions = ["alerted", "blocked"];
-                    if (validActions.includes(actionRow.toLowerCase())) {
-                        isWAFData = true;
+        console.log("📋 Pasted text captured");
 
-                        // Bersihkan dan format data
-                        let attackType = attackTypeRow; // Biarkan multiple attack types dalam satu cell
-                        let action = actionRow.trim().toLowerCase();
-                        let count = countRow.replace(/,/g, "").trim(); // Hapus koma dari angka
+        // Check if it's WAF data (3 lines format)
+        const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+        
+        if (lines.length % 3 === 0) {
+            const wafEntries = [];
+            
+            for (let i = 0; i < lines.length; i += 3) {
+                const attackType = lines[i];
+                const action = lines[i + 1]?.toLowerCase();
+                const count = lines[i + 2]?.replace(/,/g, '');
 
-                        wafEntries.push({ attackType, action, count });
-                    }
+                if (action === 'blocked' || action === 'alerted') {
+                    wafEntries.push({ attackType, action, count });
                 }
             }
 
-            if (isWAFData) {
-                // Jika data mengandung jenis serangan, masukkan ke WAF
-                console.log("✅ Data is for WAF. Entries to be saved:", wafEntries);
-                chrome.storage.local.get({ wafEntries: [] }, (data) => {
-                    let storedData = data.wafEntries || [];
-
-                    // Tambahkan data baru ke storage jika belum ada
-                    wafEntries.forEach(newEntry => {
-                        let exists = storedData.some(entry =>
-                            entry.attackType === newEntry.attackType &&
-                            entry.action === newEntry.action
-                        );
-
-                        if (!exists) {
-                            storedData.push(newEntry);
-                        }
-                    });
-
-                    // Simpan data ke chrome.storage.local
-                    chrome.storage.local.set({ wafEntries: storedData }, () => {
-                        console.log("✅ WAF Data Saved:", storedData);
-                        // Cek apakah data benar-benar tersimpan
-                        chrome.storage.local.get("wafEntries", (result) => {
-                            console.log("🔄 Data in storage:", result.wafEntries);
-                        });
-                    });
+            if (wafEntries.length > 0) {
+                chrome.runtime.sendMessage({
+                    action: "saveWAFData",
+                    data: wafEntries
+                }, response => {
+                    if (response && response.success) {
+                        console.log("✅ WAF data saved successfully");
+                    } else {
+                        console.error("❌ Error saving WAF data");
+                    }
                 });
-            } else {
-                // Jika tidak memenuhi kedua kondisi, abaikan data
-                console.log("❌ Data is not for IPS or WAF. Ignoring...");
             }
         }
-
     } catch (err) {
-        console.error("🚨 Clipboard error:", err);
+        console.error("🚨 Error processing paste event:", err);
     }
+});
+
+// Listen for messages from popup
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "refreshData") {
+        console.log("🔄 Refreshing data...");
+        // You can add any refresh logic here if needed
+        sendResponse({ success: true });
+    }
+    return true;
 });
