@@ -4,125 +4,126 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wazuh Extension</title>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        .tabs { display: flex; margin-bottom: 10px; }
-        .tab { padding: 10px 20px; cursor: pointer; border: 1px solid #ccc; border-bottom: none; }
-        .tab.active { background-color: #ddd; font-weight: bold; }
-        .tab-content { display: none; border: 1px solid #ccc; padding: 10px; }
-        .tab-content.active { display: block; }
-
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid black; padding: 5px; text-align: left; }
-        th { background-color: #f2f2f2; cursor: pointer; }
-        td[contenteditable="true"] { background-color: #ffffcc; cursor: pointer; }
-        button { margin-top: 10px; padding: 5px; }
-        .pagination { margin-top: 10px; display: flex; align-items: center; gap: 10px; }
-        .sort-icon {
-            margin-left: 5px;
-            font-size: 12px;
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
         }
-
-        .sort-icon.asc::after {
-            content: "↑";
-        }
-
-        .sort-icon.desc::after {
-            content: "↓";
-        }
-    </style>
+    </script>
 </head>
-<body>
-
-    <div class="tabs">
-        <div class="tab active" data-target="alertsTab">Alerts</div>
-        <div class="tab" data-target="wafTab">WAF</div>
-        <div class="tab" data-target="reportTab">Report</div>
+<body class="bg-white text-gray-900 p-4 min-w-[800px]">
+    <div class="tabs flex border-b border-gray-200 mb-4">
+        <div class="tab cursor-pointer px-4 py-2 border-b-2 border-black font-medium active" data-target="alertsTab">Alerts</div>
+        <div class="tab cursor-pointer px-4 py-2 border-b-2 border-transparent hover:border-gray-300" data-target="wafTab">WAF</div>
+        <div class="tab cursor-pointer px-4 py-2 border-b-2 border-transparent hover:border-gray-300" data-target="reportTab">Report</div>
     </div>
 
     <!-- Alerts Tab -->
     <div id="alertsTab" class="tab-content active">
-        <h2>Wazuh Alerts</h2>
-        <button id="removeSelected">Remove Selected</button>
-        
-        <label for="rowsPerPage">Rows per page:</label>
-        <select id="rowsPerPage">
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-            <option value="200">200</option>
-        </select>
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">Wazuh Alerts</h2>
+            <div class="flex items-center gap-4">
+                <button id="removeSelected" class="px-3 py-1 bg-black text-white rounded hover:bg-gray-800">Remove Selected</button>
+                <div class="flex items-center gap-2">
+                    <label for="rowsPerPage" class="text-sm">Rows per page:</label>
+                    <select id="rowsPerPage" class="border border-gray-300 rounded px-2 py-1">
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                </div>
+            </div>
+        </div>
 
-        <table id="alertsTable">
-            <thead>
-                <tr>
-                    <th><input type="checkbox" id="selectAll"></th>
-                    <th data-field="timestamp">Timestamp <span class="sort-icon"></span></th>
-                    <th data-field="service">Service <span class="sort-icon"></span></th>
-                    <th data-field="sourceIP">Source IP <span class="sort-icon"></span></th>
-                    <th data-field="destIP">Destination IP <span class="sort-icon"></span></th>
-                    <th data-field="port">Port <span class="sort-icon"></span></th>
-                    <th data-field="status">Status <span class="sort-icon"></span></th>
-                    <th data-field="country">Country <span class="sort-icon"></span></th>
-                    <th data-field="attackType">Attack Type <span class="sort-icon"></span></th>
-                    <th data-field="severity">Severity <span class="sort-icon"></span></th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <div class="overflow-x-auto">
+            <table id="alertsTable" class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="border px-4 py-2"><input type="checkbox" id="selectAll"></th>
+                        <th class="border px-4 py-2 cursor-pointer" data-field="timestamp">Timestamp <span class="sort-icon"></span></th>
+                        <th class="border px-4 py-2 cursor-pointer" data-field="service">Service <span class="sort-icon"></span></th>
+                        <th class="border px-4 py-2 cursor-pointer" data-field="sourceIP">Source IP <span class="sort-icon"></span></th>
+                        <th class="border px-4 py-2 cursor-pointer" data-field="destIP">Destination IP <span class="sort-icon"></span></th>
+                        <th class="border px-4 py-2 cursor-pointer" data-field="port">Port <span class="sort-icon"></span></th>
+                        <th class="border px-4 py-2 cursor-pointer" data-field="status">Status <span class="sort-icon"></span></th>
+                        <th class="border px-4 py-2 cursor-pointer" data-field="country">Country <span class="sort-icon"></span></th>
+                        <th class="border px-4 py-2 cursor-pointer" data-field="attackType">Attack Type <span class="sort-icon"></span></th>
+                        <th class="border px-4 py-2 cursor-pointer" data-field="severity">Severity <span class="sort-icon"></span></th>
+                        <th class="border px-4 py-2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
 
-        <div class="pagination">
-            <button id="prevPage">Previous</button>
-            <span id="pageInfo">Page 1</span>
-            <button id="nextPage">Next</button>
+        <div class="pagination flex items-center justify-between mt-4">
+            <button id="prevPage" class="px-3 py-1 bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50">Previous</button>
+            <span id="pageInfo" class="text-sm">Page 1</span>
+            <button id="nextPage" class="px-3 py-1 bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50">Next</button>
         </div>
     </div>
 
     <!-- WAF Tab -->
-    <div id="wafTab" class="tab-content">
-        <h2>WAF Data</h2>
-        <button id="removeSelectedWAF">Remove Selected</button>
+    <div id="wafTab" class="tab-content hidden">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">WAF Data</h2>
+            <div class="flex items-center gap-4">
+                <button id="removeSelectedWAF" class="px-3 py-1 bg-black text-white rounded hover:bg-gray-800">Remove Selected</button>
+                <div class="flex items-center gap-2">
+                    <label for="rowsPerPageWAF" class="text-sm">Rows per page:</label>
+                    <select id="rowsPerPageWAF" class="border border-gray-300 rounded px-2 py-1">
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                </div>
+            </div>
+        </div>
 
-        <label for="rowsPerPageWAF">Rows per page:</label>
-        <select id="rowsPerPageWAF">
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-            <option value="200">200</option>
-        </select>
+        <div class="overflow-x-auto">
+            <table id="wafTable" class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="border px-4 py-2"><input type="checkbox" id="selectAllWAF"></th>
+                        <th class="border px-4 py-2 cursor-pointer" data-field="attackType">Attack Type <span class="sort-icon"></span></th>
+                        <th class="border px-4 py-2 cursor-pointer" data-field="action">Action <span class="sort-icon"></span></th>
+                        <th class="border px-4 py-2 cursor-pointer" data-field="count">Count <span class="sort-icon"></span></th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
 
-        <table id="wafTable">
-            <thead>
-                <tr>
-                    <th><input type="checkbox" id="selectAllWAF"></th>
-                    <th data-field="attackType">Attack Type <span class="sort-icon"></span></th>
-                    <th data-field="action">Action <span class="sort-icon"></span></th>
-                    <th data-field="count">Count <span class="sort-icon"></span></th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-
-        <div class="pagination">
-            <button id="prevPageWAF">Previous</button>
-            <span id="pageInfoWAF">Page 1</span>
-            <button id="nextPageWAF">Next</button>
+        <div class="pagination flex items-center justify-between mt-4">
+            <button id="prevPageWAF" class="px-3 py-1 bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50">Previous</button>
+            <span id="pageInfoWAF" class="text-sm">Page 1</span>
+            <button id="nextPageWAF" class="px-3 py-1 bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50">Next</button>
         </div>
     </div>
 
     <!-- Report Tab -->
-    <div id="reportTab" class="tab-content">
-        <h2>Generated Reports</h2>
-        <button id="generatePerAlert">Generate Report Per Alert</button>
-        <button id="generatePer4Hours">Generate Report Per 4 Hours</button>
-        <button id="saveReport">Save Report</button>
-        <button id="copyReport">Copy Report</button> <!-- Tombol baru untuk menyalin laporan -->
-        <textarea id="reportOutput" readonly placeholder="Generated report will appear here..." style="width: 100%; height: 200px; margin-top: 10px;"></textarea>
+    <div id="reportTab" class="tab-content hidden">
+        <h2 class="text-xl font-semibold mb-4">Generated Reports</h2>
+        <div class="flex gap-2 mb-4">
+            <button id="generatePerAlert" class="px-3 py-1 bg-black text-white rounded hover:bg-gray-800">Generate Report Per Alert</button>
+            <button id="generatePer4Hours" class="px-3 py-1 bg-black text-white rounded hover:bg-gray-800">Generate Report Per 4 Hours</button>
+            <button id="saveReport" class="px-3 py-1 bg-black text-white rounded hover:bg-gray-800">Save Report</button>
+            <button id="copyReport" class="px-3 py-1 bg-black text-white rounded hover:bg-gray-800">Copy Report</button>
+        </div>
+        <textarea id="reportOutput" readonly placeholder="Generated report will appear here..." class="w-full h-[400px] p-4 border border-gray-300 rounded resize-none focus:outline-none focus:ring-1 focus:ring-black"></textarea>
     </div>
 
     <script src="popup.js"></script>

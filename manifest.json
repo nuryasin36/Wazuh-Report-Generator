@@ -2,26 +2,27 @@
   "manifest_version": 3,
   "name": "Wazuh Alert Reporter",
   "version": "1.0",
-  "description": "Copy Wazuh alerts and generate a report",
-  "permissions": 
-          ["storage",
-          "scripting",
-          "clipboardRead",
-          "clipboardWrite",
-          "activeTab",
-          "background"],
-  "host_permissions": ["<all_urls>"],
+  "description": "Captures and reports Wazuh alerts from clipboard data",
+  "permissions": [
+    "storage",
+    "clipboardRead"
+  ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "js": ["utils.js", "content.js"],
+      "type": "module"
     }
   ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": "icon.png"
+  },
+  "icons": {
+    "48": "icon.png"
   }
 }
